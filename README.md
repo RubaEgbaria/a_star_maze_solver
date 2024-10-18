@@ -5,6 +5,10 @@ Description:
 In this project, you will implement the A* algorithm to find the shortest path through a maze.
 The maze will be represented as a grid, and you will visualize the maze along with the nodes
 tested during the search process.
+
+<img width="258" alt="Screenshot 2024-10-18 at 19 03 17" src="https://github.com/user-attachments/assets/e37467da-b814-4b16-8313-b4c4eb00f200">
+
+
 Make sure your tool has the following:
 - Maze Generation: Create a maze generator that provides users with the option to either
 generate random mazes or manually design their own maze by adding walls, start points,
