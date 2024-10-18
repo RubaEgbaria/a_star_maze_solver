@@ -1,6 +1,8 @@
-import 'package:flutter/material.dart';
-import 'package:maze_solver/logic.dart';
-import 'package:maze_solver/models.dart';
+import "package:flutter/material.dart";
+import "package:maze_solver/grid_builder.dart";
+import "package:maze_solver/logic.dart";
+import "package:maze_solver/models.dart";
+import "package:maze_solver/result_dialog.dart";
 
 class MazeBuilderWidget extends StatefulWidget {
   final int numberOfGoals;
@@ -18,16 +20,18 @@ class MazeBuilderWidget extends StatefulWidget {
 class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
   List<Node> nodes = [];
   NodeMode selectedMode = NodeMode.none;
+  Map<String, String> goalResult = {};
+  Node nearestGoalNode = Node(0, 0, NodeMode.none);
+  bool isSameNumOfSteps = false;
   Map<String, String> firstGoalResult = {};
   Map<String, String> secondGoalResult = {};
+  Distance selectedHeuristic = Distance.manhattan;
+  bool canMoveDiagonally = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title:
-            const Text('Maze Solver', style: TextStyle(color: Colors.blueGrey)),
-      ),
+      appBar: AppBar(title: const Text("Maze Solver")),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         child: Column(
@@ -38,7 +42,6 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
               style: TextStyle(fontSize: 16),
             ),
             const SizedBox(height: 10),
-            // Radio buttons for selecting node types
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
@@ -48,11 +51,9 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
                 _buildRadioButton("None", NodeMode.none),
               ],
             ),
-
             const SizedBox(height: 5),
-            // Maze grid
             Expanded(
-              child: MazeGridBuilder(
+              child: GridBuilder(
                 numberOfRows: widget.numberOfRows,
                 numberOfColumns: widget.numberOfColumns,
                 numberOfGoals: widget.numberOfGoals,
@@ -60,82 +61,118 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
                 selectedMode: selectedMode,
               ),
             ),
-            Row(
+            Column(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
               children: [
+                CheckboxListTile(
+                    value: canMoveDiagonally,
+                    onChanged: (value) =>
+                        setState(() => canMoveDiagonally = value!),
+                    title: const Text("Allow diagonal movement")),
+                const Text("Select heuristic type"),
+                Row(
+                  children: [
+                    Radio<Distance>(
+                      value: Distance.manhattan,
+                      groupValue: selectedHeuristic,
+                      onChanged: (Distance? value) =>
+                          setState(() => selectedHeuristic = value!),
+                    ),
+                    const Text("Manhattan"),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Radio<Distance>(
+                      value: Distance.euclidean,
+                      groupValue: selectedHeuristic,
+                      onChanged: (Distance? value) =>
+                          setState(() => selectedHeuristic = value!),
+                    ),
+                    const Text("Euclidean"),
+                  ],
+                ),
                 ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      firstGoalResult = solveMaze(
-                          nodes,
-                          Distance.manhattan,
-                          widget.numberOfColumns,
-                          widget.numberOfRows,
-                          nodes.firstWhere((node) => node.isGoal));
+                  onPressed: () => setState(() {
+                    final goalsNodes =
+                        nodes.where((node) => node.isGoal).toList();
 
-                      secondGoalResult = solveMaze(
+                    if (goalsNodes.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          backgroundColor: Colors.blueGrey,
+                          content: Text("Please set the goals"),
+                        ),
+                      );
+                      return;
+                    }
+
+                    try {
+                      firstGoalResult = solveMaze(
+                        nodes,
+                        selectedHeuristic,
+                        widget.numberOfColumns,
+                        widget.numberOfRows,
+                        goalsNodes.first,
+                        canMoveDiagonally,
+                      );
+
+                      if (goalsNodes.length > 1) {
+                        secondGoalResult = solveMaze(
                           nodes,
-                          Distance.manhattan,
+                          selectedHeuristic,
                           widget.numberOfColumns,
                           widget.numberOfRows,
-                          nodes.lastWhere((node) => node.isGoal));
-                    });
-                  },
-                  child: const Text("Solve (Manhattan)"),
+                          goalsNodes.last,
+                          canMoveDiagonally,
+                        );
+                      }
+
+                      final stepsGoal1 =
+                          int.tryParse(firstGoalResult["steps"] ?? "0") ?? 0;
+                      final stepsGoal2 =
+                          int.tryParse(secondGoalResult["steps"] ?? "0") ?? 0;
+
+                      isSameNumOfSteps = stepsGoal1 == stepsGoal2;
+
+                      if (!isSameNumOfSteps || stepsGoal2 == 0) {
+                        goalResult = stepsGoal2 < stepsGoal1 && stepsGoal2 != 0
+                            ? secondGoalResult
+                            : firstGoalResult;
+
+                        nearestGoalNode =
+                            stepsGoal2 < stepsGoal1 && stepsGoal2 != 0
+                                ? goalsNodes.last
+                                : goalsNodes.first;
+                      }
+
+                      showDialog(
+                        context: context,
+                        builder: (BuildContext context) {
+                          if (isSameNumOfSteps) {
+                            return ResultDialog(
+                                result: _buildTwoGoalsResults(
+                                    firstGoalResult, secondGoalResult, nodes));
+                          }
+                          return ResultDialog(
+                              result: _buildNearestGoalResults(
+                                  goalResult, nearestGoalNode));
+                        },
+                      );
+                    } catch (e) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          backgroundColor: Colors.red,
+                          content: Text("Error solving maze: $e"),
+                        ),
+                      );
+                    }
+                  }),
+                  child: const Text("Solve maze"),
                 ),
                 const SizedBox(height: 20),
-                // Solve the maze button
-                ElevatedButton(
-                  onPressed: () {
-                    setState(() {
-                      firstGoalResult = solveMaze(
-                          nodes,
-                          Distance.euclidean,
-                          widget.numberOfColumns,
-                          widget.numberOfRows,
-                          nodes.firstWhere((node) => node.isGoal));
-
-                      if (widget.numberOfGoals == 2) {
-                        secondGoalResult = solveMaze(
-                            nodes,
-                            Distance.euclidean,
-                            widget.numberOfColumns,
-                            widget.numberOfRows,
-                            nodes.lastWhere((node) => node.isGoal));
-                      }
-                    });
-                  },
-                  child: const Text("Solve (Euclidean)"),
-                ),
               ],
-            ),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text("Goal (${nodes.firstWhere((node) => node.isGoal).x}, "
-                    "${nodes.firstWhere((node) => node.isGoal).y})"),
-                Text("# steps: ${firstGoalResult['steps']}"),
-                Text("Path: ${firstGoalResult['path']}"),
-                Text("Solution nodes: ${firstGoalResult['solution']}"),
-              ],
-            ),
-            if (widget.numberOfGoals == 2)
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Divider(color: Colors.blueGrey, thickness: 2),
-                  Text("Goal (${nodes.lastWhere((node) => node.isGoal).x}, "
-                      "${nodes.lastWhere((node) => node.isGoal).y})"),
-                  Text("# steps: ${secondGoalResult['steps']}"),
-                  Text("Path: ${secondGoalResult['path']}"),
-                  Text("Solution nodes: ${secondGoalResult['solution']}"),
-                ],
-              ),
-            const SizedBox(height: 25),
+            )
           ],
         ),
       ),
@@ -160,115 +197,68 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
   }
 }
 
-class MazeGridBuilder extends StatefulWidget {
-  final int numberOfRows;
-  final int numberOfColumns;
-  final int numberOfGoals;
-  final List<Node> nodes;
-  final NodeMode? selectedMode;
-
-  const MazeGridBuilder(
-      {required this.numberOfRows,
-      required this.numberOfColumns,
-      required this.numberOfGoals,
-      required this.nodes,
-      required this.selectedMode,
-      super.key});
-
-  @override
-  MazeGridBuilderState createState() => MazeGridBuilderState();
+Widget _buildNearestGoalResults(
+    Map<String, String> goalResult, Node nearestGoalNode) {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          "Goal with the Least Number of Steps",
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 10),
+        Text("Goal: (${nearestGoalNode.x}, ${nearestGoalNode.y})"),
+        const SizedBox(height: 8),
+        Text("# steps: ${goalResult["steps"] ?? "N/A"}"),
+        const SizedBox(height: 8),
+        Text("Path: ${goalResult["path"] ?? "N/A"}"),
+        const SizedBox(height: 8),
+        Text("Tested nodes: ${goalResult["tested"] ?? "N/A"}"),
+      ],
+    ),
+  );
 }
 
-class MazeGridBuilderState extends State<MazeGridBuilder> {
-  int get numOfCurrentGoals =>
-      widget.nodes.where((element) => element.isGoal).length;
-  int get numOfCurrentStarts =>
-      widget.nodes.where((element) => element.isStart).length;
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: widget.numberOfColumns,
-      ),
-      itemCount: widget.numberOfRows * widget.numberOfColumns,
-      itemBuilder: (BuildContext context, int index) {
-        int x = index % widget.numberOfColumns;
-        int y = index ~/ widget.numberOfColumns;
-
-        Node? node = widget.nodes.firstWhere(
-            (element) => element.x == x && element.y == y,
-            orElse: () => Node(x, y, NodeMode.none));
-
-        return Container(
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.black, width: 0.2),
-            color: node.isStart == true
-                ? Colors.orange.shade400
-                : node.isGoal == true
-                    ? Colors.green
-                    : node.isWall == true
-                        ? Colors.grey.shade400
-                        : null,
+Widget _buildTwoGoalsResults(Map<String, String> firstGoalResult,
+    Map<String, String> secondGoalResult, List<Node> nodes) {
+  return Padding(
+    padding: const EdgeInsets.all(16.0),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        const Text(
+          "Both Goals Have the Same Number of Steps",
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold,
           ),
-          child: Center(
-            child: TextButton(
-              onPressed: () {
-                setState(() {
-                  node.isStart = widget.selectedMode == NodeMode.start;
-                  node.isWall = widget.selectedMode == NodeMode.wall;
-                  node.isGoal = widget.selectedMode == NodeMode.goal;
+        ),
+        const SizedBox(height: 10),
+        _buildGoalResult(
+            nodes.where((node) => node.isGoal).first, firstGoalResult),
+        const SizedBox(height: 20),
+        _buildGoalResult(
+            nodes.where((node) => node.isGoal).last, secondGoalResult),
+      ],
+    ),
+  );
+}
 
-                  numOfCurrentGoals;
-                  numOfCurrentStarts;
-
-                  if (numOfCurrentGoals >= widget.numberOfGoals &&
-                      node.isGoal) {
-                    node.isGoal = false;
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                        backgroundColor: Colors.blueGrey,
-                        content: Text(
-                            "You have already set $numOfCurrentGoals goals"),
-                      ),
-                    );
-                  }
-
-                  if (numOfCurrentStarts >= 1 && node.isStart) {
-                    node.isStart = false;
-
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        backgroundColor: Colors.blueGrey,
-                        content: Text("Only one start node is allowed"),
-                      ),
-                    );
-                  }
-
-                  if (NodeMode.none == widget.selectedMode) {
-                    node.isStart = false;
-                    node.isGoal = false;
-                    node.isWall = false;
-                  }
-
-                  if (!widget.nodes.contains(node)) {
-                    widget.nodes.add(node);
-                  }
-                });
-              },
-              child: Text(
-                node.isStart == true
-                    ? "S"
-                    : node.isGoal == true
-                        ? "G"
-                        : node.isWall == true
-                            ? "W"
-                            : "(${node.x}, ${node.y}) => ${node.stepsToGoal! + node.stepsToStart!}",
-                style: const TextStyle(color: Colors.black),
-              ),
-            ),
-          ),
-        );
-      },
-    );
-  }
+Widget _buildGoalResult(Node goalNode, Map<String, String> goalResult) {
+  return Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text("Goal: (${goalNode.x}, ${goalNode.y})"),
+      Text("# steps: ${goalResult["steps"] ?? "N/A"}"),
+      Text("Path: ${goalResult["path"] ?? "N/A"}"),
+      Text("Tested nodes: ${goalResult["tested"] ?? "N/A"}"),
+    ],
+  );
 }

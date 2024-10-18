@@ -1,5 +1,5 @@
-import 'package:flutter/material.dart';
-import 'package:maze_solver/home_screen.dart';
+import "package:flutter/material.dart";
+import "package:maze_solver/home_screen.dart";
 
 void main() {
   runApp(const MyApp());

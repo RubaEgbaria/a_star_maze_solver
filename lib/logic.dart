@@ -1,6 +1,5 @@
-import 'package:maze_solver/models.dart';
-
-enum Distance { manhattan, euclidean }
+import "dart:math";
+import "package:maze_solver/models.dart";
 
 // A* algorithm
 // g(n) = cost of the path from the start node to node n
@@ -18,91 +17,84 @@ Map<String, String> solveMaze(
   int numOfCols,
   int numOfRows,
   Node goalNode,
+  bool canMoveDiagonally,
 ) {
-  // TODO:
-  // test it on paper
-  // test it on the app
-  // read the assignment
-  // think of the tricky parts
-
   List<Node> openList = [];
   List<Node> closedList = [];
   final Node startNode = nodes.firstWhere((node) => node.isStart);
-  Node closestGoalNode = goalNode;
-  closestGoalNode.stepsToGoal = 1000;
-
-  final allMazeNodes = [
-    for (int i = 0; i < numOfCols; i++)
-      for (int j = 0; j < numOfRows; j++)
-        if (nodes.any((node) => node.x == i && node.y == j))
-          nodes.firstWhere((node) => node.x == i && node.y == j)
-        else
-          Node(i, j, NodeMode.none)
-  ];
 
   openList.add(startNode);
 
-  Node currentNode = startNode;
+  startNode.stepsToGoal = calculateManhattanDistance(startNode, goalNode);
+  startNode.stepsToStart = 0;
 
-  if (heuristicType == Distance.manhattan) {
-    currentNode.stepsToGoal = calculateManhattanDistance(currentNode, goalNode);
-    currentNode.stepsToStart =
-        calculateManhattanDistance(currentNode, startNode);
-  } else if (heuristicType == Distance.euclidean) {
-    currentNode.stepsToGoal = calculateEuclideanDistance(currentNode, goalNode);
-    currentNode.stepsToStart =
-        calculateEuclideanDistance(currentNode, startNode);
-  }
   while (openList.isNotEmpty) {
-    openList.sort((a, b) => a.stepsToGoal!.compareTo(b.stepsToGoal!));
-    currentNode = openList.removeAt(0);
+    Node currentNode = openList.reduce((value, element) {
+      final fValue1 = value.stepsToStart! + value.stepsToGoal!;
+      final fValue2 = element.stepsToStart! + element.stepsToGoal!;
+      return fValue1 < fValue2 ? value : element;
+    });
+
     closedList.add(currentNode);
+    openList.remove(currentNode);
 
-    if (currentNode.isGoal) {
-      break;
-    }
+    if (currentNode.isGoal) break;
 
-    final List<Node> neighbours =
-        getNeighbours(currentNode, allMazeNodes, numOfCols, numOfRows);
+    final List<Node> neighbours = getNeighbours(
+        currentNode, nodes, numOfCols, numOfRows, canMoveDiagonally);
 
     for (final neighbour in neighbours) {
-      if (closedList.contains(neighbour)) {
-        continue;
-      }
+      // Skip if neighbour is already in closedList
+      if (closedList.contains(neighbour)) continue;
 
-      final newStepsToStart = currentNode.stepsToStart!;
+      final newStepsToStart = currentNode.stepsToStart! + 1;
+
       if (!openList.contains(neighbour) ||
           newStepsToStart < neighbour.stepsToStart!) {
         neighbour.stepsToStart = newStepsToStart;
-        neighbour.stepsToGoal = heuristicType == Distance.manhattan
+        neighbour.stepsToGoal = (heuristicType == Distance.manhattan
             ? calculateManhattanDistance(neighbour, goalNode)
-            : calculateEuclideanDistance(neighbour, goalNode);
+            : calculateEuclideanDistance(neighbour, goalNode));
 
-        openList.add(neighbour);
-        currentNode = neighbour;
+        // Add to openList if not already present
+        if (!openList.contains(neighbour)) {
+          openList.add(neighbour);
+        } else {
+          // delete the neighbour from openList
+          // and add it back with updated its position
+          openList.remove(neighbour);
+          openList.add(neighbour);
+        }
       }
     }
   }
 
+  // Return the results
   return {
-    'steps': '${closedList.length - 1}',
-    'path':
-        closedList.map((node) => '(${node.x}, ${node.y})').toList().toString(),
-    'solution':
-        openList.map((node) => '(${node.x}, ${node.y})').toList().toString(),
+    "steps": "${closedList.length - 1}",
+    "path":
+        closedList.map((node) => "(${node.x}, ${node.y})").toList().toString(),
+    "tested":
+        openList.map((node) => "(${node.x}, ${node.y})").toList().toString(),
   };
 }
 
 int calculateManhattanDistance(Node node1, Node node2) {
-  return (node1.x - node2.x).abs() + (node1.y - node2.y).abs();
+  final xValue = (node2.x - node1.x).abs();
+  final yValue = (node2.y - node1.y).abs();
+
+  return xValue + yValue;
 }
 
 int calculateEuclideanDistance(Node node1, Node node2) {
-  return ((node1.x - node2.x).abs() + (node1.y - node2.y).abs()).round();
+  final xValue = pow(node2.x - node1.x, 2);
+  final yValue = pow(node2.y - node1.y, 2);
+
+  return sqrt(xValue + yValue).toInt();
 }
 
-List<Node> getNeighbours(
-    Node node, List<Node> nodes, int numOfCols, int numOfRows) {
+List<Node> getNeighbours(Node node, List<Node> nodes, int numOfCols,
+    int numOfRows, bool canMoveDiagonally) {
   final List<Node> neighbours = [];
 
   const minX = 0;
@@ -121,10 +113,18 @@ List<Node> getNeighbours(
       if (xValue == x && yValue == y) {
         continue;
       }
+      if (!canMoveDiagonally &&
+          ((xValue == x - 1 && yValue == y - 1) ||
+              (xValue == x + 1 && yValue == y + 1) ||
+              (xValue == x - 1 && yValue == y + 1) ||
+              (xValue == x + 1 && yValue == y - 1))) {
+        continue;
+      }
       final Node neighbour = nodes.firstWhere(
         (node) => node.x == xValue && node.y == yValue,
         orElse: () => Node(xValue, yValue, NodeMode.none),
       );
+
       if (neighbour.isWall == false &&
           neighbour.x >= minX &&
           neighbour.x <= maxX &&

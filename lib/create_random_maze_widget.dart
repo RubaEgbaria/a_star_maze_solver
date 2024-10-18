@@ -1,17 +1,17 @@
-import 'dart:math';
-import 'package:flutter/material.dart';
-import 'package:maze_solver/logic.dart';
-import 'package:maze_solver/maze_builder_widget.dart';
-import 'package:maze_solver/models.dart';
+import "dart:math";
+import "package:flutter/material.dart";
+import "package:maze_solver/grid_builder.dart";
+import "package:maze_solver/logic.dart";
+import "package:maze_solver/models.dart";
 
-class RandomMazeBuilderWidget extends StatefulWidget {
-  const RandomMazeBuilderWidget({super.key});
+class CreateRandomMazeWidget extends StatefulWidget {
+  const CreateRandomMazeWidget({super.key});
 
   @override
-  RandomMazeBuilderWidgetState createState() => RandomMazeBuilderWidgetState();
+  CreateRandomMazeWidgetState createState() => CreateRandomMazeWidgetState();
 }
 
-class RandomMazeBuilderWidgetState extends State<RandomMazeBuilderWidget> {
+class CreateRandomMazeWidgetState extends State<CreateRandomMazeWidget> {
   Map<String, String> result = {};
   final numberOfRows = Random().nextInt(5) + 5;
   final numberOfColumns = Random().nextInt(5) + 5;
@@ -45,7 +45,7 @@ class RandomMazeBuilderWidgetState extends State<RandomMazeBuilderWidget> {
       appBar: AppBar(
         title: const Column(
           children: [
-            Text('Maze Solver', style: TextStyle(color: Colors.blueGrey)),
+            Text("Maze Solver", style: TextStyle(color: Colors.blueGrey)),
             Divider(
               color: Colors.blueGrey,
               thickness: 2,
@@ -56,7 +56,7 @@ class RandomMazeBuilderWidgetState extends State<RandomMazeBuilderWidget> {
       body: Column(
         children: [
           Expanded(
-            child: MazeGridBuilder(
+            child: GridBuilder(
               numberOfRows: numberOfRows,
               numberOfColumns: numberOfColumns,
               numberOfGoals: 1,
@@ -74,7 +74,8 @@ class RandomMazeBuilderWidgetState extends State<RandomMazeBuilderWidget> {
                     Distance.manhattan,
                     numberOfColumns,
                     numberOfRows,
-                    goalNode);
+                    goalNode,
+                    false);
               });
             },
             child: const Text("Solve maze Manhatten distance"),
@@ -87,17 +88,18 @@ class RandomMazeBuilderWidgetState extends State<RandomMazeBuilderWidget> {
                     Distance.euclidean,
                     numberOfColumns,
                     numberOfRows,
-                    goalNode);
+                    goalNode,
+                    false);
               });
             },
             child: const Text("Solve maze Euclidean distance"),
           ),
           const SizedBox(height: 20),
-          Text("# steps: ${result['steps']}"),
+          Text("# steps: ${result["steps"]}"),
           const SizedBox(height: 10),
-          Text("Path: ${result['path']}"),
+          Text("Path: ${result["path"]}"),
           const SizedBox(height: 10),
-          Text("Sol: ${result['solution']}"),
+          Text("Sol: ${result["tested"]}"),
           const SizedBox(height: 50),
         ],
       ),

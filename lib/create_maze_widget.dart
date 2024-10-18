@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:maze_solver/maze_builder_widget.dart';
+import "package:flutter/material.dart";
+import "package:flutter/services.dart";
+import "package:maze_solver/maze_builder_widget.dart";
 
 class CreateMazeWidget extends StatefulWidget {
   const CreateMazeWidget({super.key});
@@ -23,7 +23,7 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
       appBar: AppBar(
         title: const Column(
           children: [
-            Text('Maze solver', style: TextStyle(color: Colors.blueGrey)),
+            Text("Maze solver", style: TextStyle(color: Colors.blueGrey)),
             Divider(
               color: Colors.blueGrey,
               thickness: 2,
@@ -40,7 +40,7 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
             TextFormField(
               controller: _numberOfRowsController,
               decoration: const InputDecoration(
-                labelText: 'Number of rows',
+                labelText: "Number of rows",
               ),
               keyboardType: TextInputType.number,
               inputFormatters: <TextInputFormatter>[
@@ -50,7 +50,7 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
             TextFormField(
               controller: _numberOfColumnsController,
               decoration: const InputDecoration(
-                labelText: 'Number of columns',
+                labelText: "Number of columns",
               ),
               keyboardType: TextInputType.number,
               inputFormatters: <TextInputFormatter>[
@@ -58,7 +58,7 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
               ],
             ),
             DropdownButtonFormField(
-                hint: const Text('Number of goals'),
+                hint: const Text("Number of goals"),
                 items: numberOfGoals.map((int value) {
                   return DropdownMenuItem(
                     value: value,
@@ -68,7 +68,6 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
                 onChanged: (int? value) {
                   setState(() {
                     numberOfGoalsSelected = value!;
-                    print(numberOfGoalsSelected);
                   });
                 }),
             ElevatedButton(

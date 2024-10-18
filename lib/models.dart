@@ -1,5 +1,7 @@
 enum NodeMode { start, goal, wall, none }
 
+enum Distance { manhattan, euclidean }
+
 class Node {
   final int x;
   final int y;
@@ -25,14 +27,4 @@ class Node {
         break;
     }
   }
-
-  @override
-  bool operator ==(Object other) {
-    if (identical(this, other)) return true;
-    if (other is! Node) return false;
-    return x == other.x && y == other.y;
-  }
-
-  @override
-  int get hashCode => x.hashCode ^ y.hashCode;
 }
