@@ -10,5 +10,5 @@ open list -> sort by f(n) -> remove node with lowest f(n) -> add to closed list
 if two neighbours have the same f(n), choose the one with the lowest h(n)
 if f(n) and h(n) are the same, choose randomly
 
-<video src="lib/assets/maze_preview.mov" width="320" height="240" controls></video>
+https://github.com/user-attachments/assets/bae37e00-d8d3-49bf-ac71-4a702c09e267
 
