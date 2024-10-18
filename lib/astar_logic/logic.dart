@@ -29,8 +29,10 @@ Map<String, String> solveMaze(
   openList.add(startNode);
   parentMap[startNode] = null;
 
-  startNode.stepsToGoal = calculateManhattanDistance(startNode, goalNode);
   startNode.stepsToStart = 0;
+  startNode.stepsToGoal = heuristicType == Distance.manhattan
+      ? calculateManhattanDistance(startNode, goalNode)
+      : calculateEuclideanDistance(startNode, goalNode);
 
   while (openList.isNotEmpty) {
     Node currentNode = openList.reduce((value, element) {
