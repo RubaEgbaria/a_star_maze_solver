@@ -1,5 +1,22 @@
 # maze_solver
 
+A* Algorithm for Maze Solving
+Description:
+In this project, you will implement the A* algorithm to find the shortest path through a maze.
+The maze will be represented as a grid, and you will visualize the maze along with the nodes
+tested during the search process.
+Make sure your tool has the following:
+- Maze Generation: Create a maze generator that provides users with the option to either
+generate random mazes or manually design their own maze by adding walls, start points,
+and goal points through a graphical user interface (GUI)
+o The user may add up to two targets
+- Maze Solving Algorithms:
+o Implement the search algorithm using A*
+o As heuristic function allows the user to select between Manhattan distance, and
+Euclidean distance
+o Display on the screen how many steps you need to reach the target, and the
+tested nodes
+
 A* algorithm
 g(n) = cost of the path from the start node to node n
 h(n) = heuristic that estimates the cost of the cheapest path from n to the goal
