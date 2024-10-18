@@ -102,6 +102,9 @@ class ManualMazeScreenState extends State<ManualMazeScreen> {
                     final goalsNodes =
                         nodes.where((node) => node.isGoal).toList();
 
+                    firstGoalResult = {};
+                    secondGoalResult = {};
+
                     final firstGoalNode = goalsNodes.first;
                     final secondGoalNode = goalsNodes.last;
 
@@ -125,14 +128,16 @@ class ManualMazeScreenState extends State<ManualMazeScreen> {
                         canMoveDiagonally,
                       );
 
-                      secondGoalResult = solveMaze(
-                        nodes,
-                        selectedHeuristic,
-                        widget.numberOfColumns,
-                        widget.numberOfRows,
-                        secondGoalNode,
-                        canMoveDiagonally,
-                      );
+                      if (goalsNodes.length > 1) {
+                        secondGoalResult = solveMaze(
+                          nodes,
+                          selectedHeuristic,
+                          widget.numberOfColumns,
+                          widget.numberOfRows,
+                          secondGoalNode,
+                          canMoveDiagonally,
+                        );
+                      }
 
                       final stepsGoal1 =
                           int.tryParse(firstGoalResult["steps"] ?? "0") ?? 0;
@@ -141,15 +146,18 @@ class ManualMazeScreenState extends State<ManualMazeScreen> {
 
                       isSameNumOfSteps = stepsGoal1 == stepsGoal2;
 
-                      if (!isSameNumOfSteps || stepsGoal2 == 0) {
-                        goalResult = stepsGoal2 < stepsGoal1 && stepsGoal2 != 0
+                      if (!isSameNumOfSteps ||
+                          stepsGoal2 == 0 ||
+                          stepsGoal1 == 0) {
+                        goalResult = stepsGoal1 == 0 ||
+                                (stepsGoal2 < stepsGoal1 && stepsGoal2 != 0)
                             ? secondGoalResult
                             : firstGoalResult;
 
-                        nearestGoalNode =
-                            stepsGoal2 < stepsGoal1 && stepsGoal2 != 0
-                                ? goalsNodes.last
-                                : goalsNodes.first;
+                        nearestGoalNode = stepsGoal1 == 0 ||
+                                (stepsGoal2 < stepsGoal1 && stepsGoal2 != 0)
+                            ? goalsNodes.last
+                            : goalsNodes.first;
                       }
 
                       showDialog(
