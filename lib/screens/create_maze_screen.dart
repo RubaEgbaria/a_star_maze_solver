@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
-import "package:maze_solver/widgets/maze_builder_widget.dart";
+import "package:maze_solver/screens/manual_maze_screen.dart";
 
 class CreateMazeWidget extends StatefulWidget {
   const CreateMazeWidget({super.key});
@@ -88,7 +88,7 @@ class CreateMazeWidgetState extends State<CreateMazeWidget> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => MazeBuilderWidget(
+                      builder: (context) => ManualMazeScreen(
                           numberOfGoalsSelected, rowsNum, columnsNum)),
                 );
               },

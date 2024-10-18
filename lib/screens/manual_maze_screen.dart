@@ -5,20 +5,20 @@ import "package:maze_solver/astar_logic/logic.dart";
 import "package:maze_solver/models/models.dart";
 import "package:maze_solver/widgets/result_dialog.dart";
 
-class MazeBuilderWidget extends StatefulWidget {
+class ManualMazeScreen extends StatefulWidget {
   final int numberOfGoals;
   final int numberOfRows;
   final int numberOfColumns;
 
-  const MazeBuilderWidget(
+  const ManualMazeScreen(
       this.numberOfGoals, this.numberOfRows, this.numberOfColumns,
       {super.key});
 
   @override
-  MazeBuilderWidgetState createState() => MazeBuilderWidgetState();
+  ManualMazeScreenState createState() => ManualMazeScreenState();
 }
 
-class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
+class ManualMazeScreenState extends State<ManualMazeScreen> {
   List<Node> nodes = [];
   NodeMode selectedMode = NodeMode.none;
   Map<String, String> goalResult = {};
@@ -102,6 +102,9 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
                     final goalsNodes =
                         nodes.where((node) => node.isGoal).toList();
 
+                    final firstGoalNode = goalsNodes.first;
+                    final secondGoalNode = goalsNodes.last;
+
                     if (goalsNodes.isEmpty) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
@@ -118,20 +121,18 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
                         selectedHeuristic,
                         widget.numberOfColumns,
                         widget.numberOfRows,
-                        goalsNodes.first,
+                        firstGoalNode,
                         canMoveDiagonally,
                       );
 
-                      if (goalsNodes.length > 1) {
-                        secondGoalResult = solveMaze(
-                          nodes,
-                          selectedHeuristic,
-                          widget.numberOfColumns,
-                          widget.numberOfRows,
-                          goalsNodes.last,
-                          canMoveDiagonally,
-                        );
-                      }
+                      secondGoalResult = solveMaze(
+                        nodes,
+                        selectedHeuristic,
+                        widget.numberOfColumns,
+                        widget.numberOfRows,
+                        secondGoalNode,
+                        canMoveDiagonally,
+                      );
 
                       final stepsGoal1 =
                           int.tryParse(firstGoalResult["steps"] ?? "0") ?? 0;
@@ -157,7 +158,10 @@ class MazeBuilderWidgetState extends State<MazeBuilderWidget> {
                           if (isSameNumOfSteps) {
                             return ResultDialog(
                                 result: _buildTwoGoalsResults(
-                                    firstGoalResult, secondGoalResult, nodes));
+                                    firstGoalResult,
+                                    secondGoalResult,
+                                    firstGoalNode,
+                                    secondGoalNode));
                           }
                           return ResultDialog(
                               result: _buildNearestGoalResults(
@@ -230,27 +234,30 @@ Widget _buildNearestGoalResults(
   );
 }
 
-Widget _buildTwoGoalsResults(Map<String, String> firstGoalResult,
-    Map<String, String> secondGoalResult, List<Node> nodes) {
+Widget _buildTwoGoalsResults(
+    Map<String, String> firstGoalResult,
+    Map<String, String> secondGoalResult,
+    Node firstGoalNode,
+    Node secondGoalNode) {
   return Padding(
     padding: const EdgeInsets.all(16.0),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const Text(
-          "Both Goals Have the Same Number of Steps",
-          style: TextStyle(
+        Text(
+          firstGoalResult["path"] == null || secondGoalResult["path"] == null
+              ? "No Solution Found, walls are blocking the path"
+              : "Both Goals Have the Same Number of Steps",
+          style: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 10),
-        goalResultWidget(
-            nodes.where((node) => node.isGoal).first, firstGoalResult),
+        goalResultWidget(firstGoalNode, firstGoalResult),
         const SizedBox(height: 20),
-        goalResultWidget(
-            nodes.where((node) => node.isGoal).last, secondGoalResult),
+        goalResultWidget(secondGoalNode, secondGoalResult),
       ],
     ),
   );

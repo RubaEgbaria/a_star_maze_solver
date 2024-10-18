@@ -43,6 +43,11 @@ Map<String, String> solveMaze(
     openList.remove(currentNode);
 
     if (currentNode.isGoal) {
+      if (goalNode != currentNode) {
+        // on the way to find the goal, we found another goal
+        // so we break the loop and return an empty map
+        return {};
+      }
       Node? node = currentNode;
       while (node != null) {
         path.add(node);
@@ -75,11 +80,14 @@ Map<String, String> solveMaze(
         } else {
           // delete the neighbour from openList
           // and add it back with updated its position
-          openList.remove(neighbour);
           openList.add(neighbour);
         }
       }
     }
+  }
+
+  if (path.isEmpty) {
+    return {};
   }
 
   // Return the results
