@@ -35,12 +35,11 @@ Map<String, String> solveMaze(
       : calculateEuclideanDistance(startNode, goalNode);
 
   while (openList.isNotEmpty) {
-    Node currentNode = openList.reduce((value, element) {
+    final currentNode = openList.reduce((value, element) {
       final fValue1 = value.stepsToStart + value.stepsToGoal;
       final fValue2 = element.stepsToStart + element.stepsToGoal;
       return fValue1 < fValue2 ? value : element;
     });
-
     closedList.add(currentNode);
     openList.remove(currentNode);
 

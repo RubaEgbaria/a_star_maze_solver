@@ -35,8 +35,8 @@ class GridBuilderState extends State<GridBuilder> {
       ),
       itemCount: widget.numberOfRows * widget.numberOfColumns,
       itemBuilder: (BuildContext context, int index) {
-        int y = index % widget.numberOfColumns;
-        int x = index ~/ widget.numberOfColumns;
+        final y = index % widget.numberOfColumns;
+        final x = index ~/ widget.numberOfColumns;
 
         Node? node = widget.nodes.firstWhere(
             (element) => element.x == x && element.y == y,

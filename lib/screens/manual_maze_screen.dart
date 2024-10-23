@@ -171,6 +171,11 @@ class ManualMazeScreenState extends State<ManualMazeScreen> {
                                     firstGoalNode,
                                     secondGoalNode));
                           }
+                          if (goalResult.isEmpty) {
+                            return const ResultDialog(
+                              result: Text("No solution found"),
+                            );
+                          }
                           return ResultDialog(
                               result: _buildNearestGoalResults(
                                   goalResult, nearestGoalNode));
