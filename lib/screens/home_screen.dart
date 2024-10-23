@@ -21,7 +21,7 @@ class HomeScreen extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceEvenly,
           mainAxisSize: MainAxisSize.max,
           children: [
-            Image.asset("lib/maze.gif"),
+            Image.asset("lib/assets/maze.gif"),
             const Text("How would you like to start?",
                 style: TextStyle(
                     fontSize: 20,
