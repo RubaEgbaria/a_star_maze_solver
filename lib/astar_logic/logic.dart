@@ -11,6 +11,10 @@ import "package:maze_solver/models/models.dart";
 // if two neighbours have the same f(n), choose the one with the lowest h(n)
 // if f(n) and h(n) are the same, choose randomly
 
+// from the review
+// the goals should be handled in here not in the UI
+// also should check for visited nodes
+
 Map<String, String> solveMaze(
   List<Node> nodes,
   Distance heuristicType,
@@ -75,14 +79,7 @@ Map<String, String> solveMaze(
             : calculateEuclideanDistance(neighbour, goalNode));
         parentMap[neighbour] = currentNode;
 
-        // Add to openList if not already present
-        if (!openList.contains(neighbour)) {
-          openList.add(neighbour);
-        } else {
-          // delete the neighbour from openList
-          // and add it back with updated its position
-          openList.add(neighbour);
-        }
+        openList.add(neighbour);
       }
     }
   }
